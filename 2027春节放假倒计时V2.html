@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2027春节放假倒计时 | 流星雨版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #000000;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            perspective: 1500px;
+        }
+
+        #starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at center, #050520 0%, #000000 80%);
+        }
+
+        .star {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            opacity: 0;
+            animation: starFloat linear infinite;
+        }
+
+        /* 流星样式：细长型，开头高亮结尾渐暗，匹配箭头斜向效果 */
+        .meteor {
+            position: absolute;
+            width: 250px; /* 加长流星，匹配箭头长度 */
+            height: 2px; /* 更细的流星，更贴近箭头效果 */
+            background: linear-gradient(300deg, #ffffff, rgba(255, 255, 255, 0.2), transparent);
+            border-radius: 50%;
+            animation: meteorShoot linear infinite;
+        }
+
+        .meteor.from-top {
+            /* 从顶部开始的流星，向左下方移动 */
+            top: -50px;
+            left: 0;
+        }
+
+        .meteor.from-right {
+            /* 从右侧开始的流星，向左下方移动 */
+            top: 0;
+            right: -250px;
+        }
+
+        .title {
+            font-size: 3.5rem;
+            margin-bottom: 4rem;
+            text-align: center;
+            background: linear-gradient(180deg, #ffffff, #8ab4f8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 20px rgba(138, 180, 248, 0.5), 0 0 40px rgba(66, 133, 244, 0.3);
+            transform: translateZ(50px);
+            letter-spacing: 3px;
+        }
+
+        .countdown-wrapper {
+            display: flex;
+            gap: 6rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            perspective: 1200px;
+        }
+
+        .countdown-card {
+            width: 500px;
+            height: 380px;
+            background: rgba(10, 10, 30, 0.4);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(138, 180, 248, 0.2);
+            border-radius: 25px;
+            padding: 3rem 2.5rem;
+            box-shadow: 0 0 30px rgba(66, 133, 244, 0.1), inset 0 0 20px rgba(0, 0, 0, 0.5);
+            transform-style: preserve-3d;
+            transform: rotateY(8deg) translateZ(30px);
+            transition: all 0.6s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .countdown-card:hover {
+            transform: rotateY(0deg) translateZ(50px) scale(1.03);
+            box-shadow: 0 0 40px rgba(66, 133, 244, 0.25), inset 0 0 20px rgba(0, 0, 0, 0.5);
+            border-color: rgba(138, 180, 248, 0.4);
+        }
+
+        .card-title {
+            font-size: 1.8rem;
+            text-align: center;
+            margin-bottom: 2.5rem;
+            color: #e8f0fe;
+            padding-bottom: 1.2rem;
+            border-bottom: 1px solid rgba(138, 180, 248, 0.2);
+        }
+
+        .card-title span {
+            font-size: 1.1rem;
+            color: #8ab4f8;
+            margin-left: 10px;
+            opacity: 0.8;
+        }
+
+        .countdown-box {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            gap: 1.2rem;
+            position: relative;
+            height: 150px;
+            flex: 1;
+        }
+
+        .time-unit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            height: 100%;
+            justify-content: center;
+        }
+
+        .time-num {
+            font-size: 4.5rem;
+            font-weight: 700;
+            line-height: 1;
+            background: linear-gradient(180deg, #ffffff, #c9daf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+            animation: numFloat 3s ease-in-out infinite;
+            text-shadow: 0 0 18px rgba(138, 180, 248, 0.6), 0 0 35px rgba(66, 133, 244, 0.4);
+        }
+
+        .time-unit:nth-child(1) .time-num { animation-delay: 0s; }
+        .time-unit:nth-child(2) .time-num { animation-delay: 0.3s; }
+        .time-unit:nth-child(3) .time-num { animation-delay: 0.6s; }
+        .time-unit:nth-child(4) .time-num { animation-delay: 0.9s; }
+
+        .time-label {
+            font-size: 1.2rem;
+            color: #8ab4f8;
+            margin-top: 12px;
+            letter-spacing: 2px;
+            opacity: 0.8;
+            text-transform: uppercase;
+        }
+
+        .status-text {
+            text-align: center;
+            margin-top: 1.8rem;
+            font-size: 1.3rem;
+            color: #4285f4;
+            text-shadow: 0 0 10px rgba(66, 133, 244, 0.4);
+        }
+
+        @keyframes starFloat {
+            0% {
+                opacity: 0;
+                transform: translate(0, 0) scale(0.5);
+            }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.8; }
+            100% {
+                opacity: 0;
+                transform: translate(var(--x-move), var(--y-move)) scale(1.2);
+            }
+        }
+
+        /* 流星动画：斜向左下划过，匹配箭头角度 */
+        @keyframes meteorShoot {
+            0% {
+                opacity: 0;
+                transform: translate(0, 0) rotate(var(--rotate-deg));
+            }
+            8% { opacity: 1; } /* 延迟显示，更自然 */
+            25% { opacity: 0.7; }
+            30% {
+                opacity: 0;
+                transform: translate(var(--end-x), var(--end-y)) rotate(var(--rotate-deg));
+            }
+            100% { opacity: 0; }
+        }
+
+        @keyframes numFloat {
+            0% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-8px) scale(1.04); }
+            100% { transform: translateY(0px) scale(1); }
+        }
+
+        /* 响应式适配 */
+        @media (max-width: 768px) {
+            .title {
+                font-size: 2.5rem;
+                margin-bottom: 2.5rem;
+            }
+            .countdown-wrapper {
+                gap: 2rem;
+            }
+            .countdown-card {
+                width: 95%;
+                height: 340px;
+                padding: 2rem 1.5rem;
+            }
+            .card-title {
+                font-size: 1.5rem;
+                margin-bottom: 2rem;
+            }
+            .countdown-box {
+                height: 120px;
+            }
+            .time-num {
+                font-size: 3.5rem;
+            }
+            .time-label {
+                font-size: 1rem;
+            }
+            .status-text {
+                font-size: 1.1rem;
+                margin-top: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .time-num {
+                font-size: 2.8rem;
+            }
+            .countdown-box {
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="starfield"></div>
+
+    <h1 class="title">2027春节放假倒计时</h1>
+
+    <div class="countdown-wrapper">
+        <div class="countdown-card">
+            <div class="card-title">第一批放假 <span>2027.01.29 18:00</span></div>
+            <div class="countdown-box">
+                <div class="time-unit">
+                    <div class="time-num" id="b1-d">00</div>
+                    <div class="time-label">天</div>
+                </div>
+                <div class="time-unit">
+                    <div class="time-num" id="b1-h">00</div>
+                    <div class="time-label">时</div>
+                </div>
+                <div class="time-unit">
+                    <div class="time-num" id="b1-m">00</div>
+                    <div class="time-label">分</div>
+                </div>
+                <div class="time-unit">
+                    <div class="time-num" id="b1-s">00</div>
+                    <div class="time-label">秒</div>
+                </div>
+            </div>
+            <div class="status-text" id="b1-status">距离放假还有</div>
+        </div>
+
+        <div class="countdown-card">
+            <div class="card-title">第二批放假 <span>2027.01.29 18:00</span></div>
+			
+            <div class="countdown-box">
+                <div class="time-unit">
+                    <div class="time-num" id="b2-d">00</div>
+                    <div class="time-label">天</div>
+                </div>
+                <div class="time-unit">
+                    <div class="time-num" id="b2-h">00</div>
+                    <div class="time-label">时</div>
+                </div>
+                <div class="time-unit">
+                    <div class="time-num" id="b2-m">00</div>
+                    <div class="time-label">分</div>
+                </div>
+                <div class="time-unit">
+                    <div class="time-num" id="b2-s">00</div>
+                    <div class="time-label">秒</div>
+                </div>
+            </div>
+            <div class="status-text" id="b2-status">距离放假还有</div>
+        </div>
+    </div>
+
+    <script>
+        const starfield = document.getElementById('starfield');
+        const starCount = 400;
+        const meteorCount = 15; // 总流星数量，现在分为两部分
+
+        // 创建星空粒子
+        for (let i = 0; i < starCount; i++) {
+            const star = document.createElement('div');
+            star.classList.add('star');
+            const size = Math.random() * 2 + 0.5;
+            const top = Math.random() * 100;
+            const left = Math.random() * 100;
+            const xMove = Math.random() * 200 - 200;
+            const yMove = Math.random() * 200 - 100;
+            const duration = Math.random() * 10 + 10;
+
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            star.style.top = `${top}%`;
+            star.style.left = `${left}%`;
+            star.style.setProperty('--x-move', `${xMove}px`);
+            star.style.setProperty('--y-move', `${yMove}px`);
+            star.style.animationDuration = `${duration}s`;
+            starfield.appendChild(star);
+        }
+
+        // 创建流星：从屏幕顶部和右侧随机位置出发，斜向左下划过
+        for (let i = 0; i < meteorCount; i++) {
+            const meteor = document.createElement('div');
+            meteor.classList.add('meteor');
+            
+            // 决定流星是从顶部还是右侧发出 (50% 概率)
+            const fromTop = Math.random() > 0.5;
+            
+            if (fromTop) {
+                // 从顶部发出的流星：从屏幕顶部随机位置向左下方移动
+                const leftPos = Math.random() * 100; // 0-100% 的水平位置
+                const duration = Math.random() * 9 + 3; 
+                const rotateDeg =  150; // 45-90度，从上往下倾斜
+                
+                meteor.classList.add('from-top');
+                meteor.style.left = `${leftPos}%`;
+                
+                // 计算结束位置：向左下方移动
+                const endX = -window.innerWidth * 0.8; // 向左移动屏幕宽度的80%
+                const endY = window.innerHeight * 0.8; // 向下移动屏幕高度的80%
+                
+                meteor.style.animationDuration = `${duration}s`;
+                meteor.style.animationDelay = `${Math.random() * 30}s`;
+                meteor.style.setProperty('--rotate-deg', `${rotateDeg}deg`);
+                meteor.style.setProperty('--end-x', `${endX}px`);
+                meteor.style.setProperty('--end-y', `${endY}px`);
+            } else {
+                // 从右侧发出的流星：从屏幕右侧随机位置向左下方移动
+                const topPos = Math.random() * 100; // 0-100% 的垂直位置
+                const duration = Math.random() * 9 + 3; 
+                const rotateDeg =  150; // 135-180度，从右向左下方倾斜
+                
+                meteor.classList.add('from-right');
+                meteor.style.top = `${topPos}%`;
+                
+                // 计算结束位置：向左下方移动
+                const endX = -window.innerWidth * 0.8; // 向左移动屏幕宽度的80%
+                const endY = window.innerHeight * 0.8; // 向下移动屏幕高度的80%
+                
+                meteor.style.animationDuration = `${duration}s`;
+                meteor.style.animationDelay = `${Math.random() * 30}s`;
+                meteor.style.setProperty('--rotate-deg', `${rotateDeg}deg`);
+                meteor.style.setProperty('--end-x', `${endX}px`);
+                meteor.style.setProperty('--end-y', `${endY}px`);
+            }
+            
+            starfield.appendChild(meteor);
+        }
+
+        // 倒计时核心逻辑 - 更新为放假时间：第一批2027.01.29 18:00，第二批2027.01.29 18:00
+        const target1 = new Date('2027-01-29T18:00:00').getTime();
+        const target2 = new Date('2027-01-29T18:00:00').getTime();
+
+        const formatNum = (num) => num.toString().padStart(2, '0');
+
+        const updateCountdown = () => {
+            const now = new Date().getTime();
+            let diff1 = target1 - now;
+            let diff2 = target2 - now;
+
+            if (diff1 <= 0) diff1 = 0;
+            if (diff2 <= 0) diff2 = 0;
+
+            const calcTime = (diff) => {
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                return { days, hours, minutes, seconds };
+            };
+
+            const t1 = calcTime(diff1);
+            const t2 = calcTime(diff2);
+
+            document.getElementById('b1-d').innerText = formatNum(t1.days);
+            document.getElementById('b1-h').innerText = formatNum(t1.hours);
+            document.getElementById('b1-m').innerText = formatNum(t1.minutes);
+            document.getElementById('b1-s').innerText = formatNum(t1.seconds);
+            document.getElementById('b1-status').innerText = diff1 === 0 ? '已放假！💪' : '距离放假还有';
+
+            document.getElementById('b2-d').innerText = formatNum(t2.days);
+            document.getElementById('b2-h').innerText = formatNum(t2.hours);
+            document.getElementById('b2-m').innerText = formatNum(t2.minutes);
+            document.getElementById('b2-s').innerText = formatNum(t2.seconds);
+            document.getElementById('b2-status').innerText = diff2 === 0 ? '已放假！💪' : '距离放假还有';
+        };
+
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+        
+        // 窗口大小改变时重新计算流星路径
+        window.addEventListener('resize', function() {
+            const meteors = document.querySelectorAll('.meteor');
+            meteors.forEach(meteor => {
+                if (meteor.classList.contains('from-top')) {
+                    const endX = -window.innerWidth * 0.8;
+                    const endY = window.innerHeight * 0.8;
+                    meteor.style.setProperty('--end-x', `${endX}px`);
+                    meteor.style.setProperty('--end-y', `${endY}px`);
+                } else if (meteor.classList.contains('from-right')) {
+                    const endX = -window.innerWidth * 0.8;
+                    const endY = window.innerHeight * 0.8;
+                    meteor.style.setProperty('--end-x', `${endX}px`);
+                    meteor.style.setProperty('--end-y', `${endY}px`);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
